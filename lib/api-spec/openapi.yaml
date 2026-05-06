@@ -1,0 +1,452 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: SITS - Smart Internship Tracker System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: internships
+    description: Internship operations
+  - name: dashboard
+    description: Dashboard statistics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /internships:
+    get:
+      operationId: listInternships
+      tags: [internships]
+      summary: List all internships for the current user
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of internships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Internship"
+    post:
+      operationId: createInternship
+      tags: [internships]
+      summary: Create a new internship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInternshipBody"
+      responses:
+        "201":
+          description: Internship created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Internship"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /internships/{id}:
+    get:
+      operationId: getInternship
+      tags: [internships]
+      summary: Get a single internship
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Internship details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Internship"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateInternship
+      tags: [internships]
+      summary: Update an internship
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInternshipBody"
+      responses:
+        "200":
+          description: Updated internship
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Internship"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteInternship
+      tags: [internships]
+      summary: Delete an internship
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /internships/upcoming-deadlines:
+    get:
+      operationId: getUpcomingDeadlines
+      tags: [internships]
+      summary: Get internships with upcoming deadlines (next 7 days)
+      responses:
+        "200":
+          description: Internships with upcoming deadlines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Internship"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+
+    RegisterBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+      required:
+        - email
+        - password
+        - name
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required:
+        - user
+        - message
+
+    Internship:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offered, Rejected, Saved]
+        notes:
+          type: ["string", "null"]
+        salary:
+          type: ["string", "null"]
+        applicationLink:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - company
+        - role
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateInternshipBody:
+      type: object
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offered, Rejected, Saved]
+        notes:
+          type: ["string", "null"]
+        salary:
+          type: ["string", "null"]
+        applicationLink:
+          type: ["string", "null"]
+      required:
+        - company
+        - role
+        - status
+
+    UpdateInternshipBody:
+      type: object
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: ["string", "null"]
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [Applied, Interviewing, Offered, Rejected, Saved]
+        notes:
+          type: ["string", "null"]
+        salary:
+          type: ["string", "null"]
+        applicationLink:
+          type: ["string", "null"]
+
+    DashboardStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        applied:
+          type: integer
+        interviewing:
+          type: integer
+        offered:
+          type: integer
+        rejected:
+          type: integer
+        saved:
+          type: integer
+        upcomingDeadlines:
+          type: integer
+      required:
+        - total
+        - applied
+        - interviewing
+        - offered
+        - rejected
+        - saved
+        - upcomingDeadlines
